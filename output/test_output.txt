@@ -1,0 +1,54 @@
+=== OpenGL Bunny Viewer Tests ===
+
+--- Testing bunny_iH.ply2 ---
+
+[TEST] bunny_iH.ply2 data ... PASS (v=34834 f=69451 bbox=[(-10,-9.91231,1.94944) - (10,9.91231,17.7504)]
+       dims=[20,19.8246,15.801]
+
+--- Testing bunny_normal.ply2 ---
+
+[TEST] bunny_normal.ply2 data ... PASS (v=34834 f=69451 bbox=[(-10,-9.91231,1.94944) - (10,9.91231,17.7504)]
+       dims=[20,19.8246,15.801] normals=yes
+
+--- Testing bunny_iH.ply ---
+
+[TEST] bunny_iH.ply data ... PASS (v=34834 f=69451 bbox=[(-10,-9.91231,1.94944) - (10,9.91231,17.7504)]
+       dims=[20,19.8246,15.801]
+
+--- Testing shader file existence ---
+
+[TEST] bunny,vs ... PASS (701 bytes)
+
+[TEST] bunny.fs ... PASS (4864 bytes)
+
+[TEST] marker.vs ... PASS (328 bytes)
+
+[TEST] marker.fs ... PASS (364 bytes)
+
+=== Testing error handling ===
+
+[TEST] nonexistent file ... Failed to open file: nonexistent.ply2
+PASS
+
+[TEST] empty file ... Failed to read header line 1
+PASS
+
+[TEST] file with only header ... Failed to read vertex 0
+PASS
+
+[TEST] file with bad index ... Face 0: index 999 out of range (max 2)
+PASS
+
+[TEST] file with NaN vertex ... PASS
+
+--- Testing cross-file consistency ---
+
+[TEST] vertex count consistent across files ... PASS
+
+--- Testing executable ---
+
+[TEST] main.exe exists ... PASS
+
+========================================
+Results: 14/14 tests passed
+========================================
