@@ -495,7 +495,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         shader.use();
-        shader.setVec3("uColor", vec3(0.8f, 0.6f, 0.4f));
+        shader.setVec3("uColor", vec3(0.9f, 0.9f, 0.9f));
         
         mat4 projection = perspective(radians(camera.Zoom), 
             (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
