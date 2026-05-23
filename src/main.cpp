@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+﻿#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cmath>
+#include <windows.h>
 
 using namespace std;
 using namespace glm;
@@ -14,7 +15,7 @@ using namespace glm;
 #define MAXPOINT 40000
 #define MAXINDEX 70000
 
-// ����ࣨ�򻯰棩
+// 相机类（简化版）
 class Camera {
 public:
     vec3 Position;
@@ -79,13 +80,13 @@ private:
     }
 };
 
-// ������
+// 方向常量
 const int FORWARD = 0;
 const int BACKWARD = 1;
 const int LEFT = 2;
 const int RIGHT = 3;
 
-// GLFW ���볣��
+// GLFW 键码常量
 #define GLFW_KEY_W 87
 #define GLFW_KEY_S 83
 #define GLFW_KEY_A 65
@@ -103,7 +104,7 @@ const int RIGHT = 3;
 #define GLFW_KEY_ESCAPE 256
 #define GLFW_KEY_TAB 258
 
-// ��������
+// 函数声明
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -111,29 +112,29 @@ void picking_callback(GLFWwindow *window, int button, int action, int mods);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void interactionFunctions();
 
-// ���ڲ���
+// 窗口参数
 const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
-// ���
+// 相机
 Camera camera(vec3(0.0f, 0.0f, 30.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// ʱ�����
+// 时间参数
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// ���Ӳ���
+// 兔子参数
 mat4 modelBunny = mat4(1.0f);
 GLuint vertices_size, indices_size;
 
-// ������
+// 鼠标参数
 GLfloat mouseX = SCR_WIDTH / 2.0;
 GLfloat mouseY = SCR_HEIGHT / 2.0;
 GLuint selectedPointIndice = 0;
-bool showPointInfo = true;  // �Ƿ���ʾѡȡ�ĵ�
+bool showPointInfo = true;  // 是否显示选取的点
 
 const char* normalFile = "bunny_normal.ply2";
 const char *SPLIT = "--------------------------------------------------------------";
@@ -141,9 +142,9 @@ GLfloat vertices[MAXPOINT*6];
 GLuint indices[MAXINDEX*3];
 
 bool keys[1024];
-bool cursorDisabled = false;  // Ĭ����������ƶ�
+bool cursorDisabled = false;  // 默认允许鼠标移动
 
-// PLY2 �ļ���ȡ�������ο� parser.cpp��
+// PLY2 文件读取（参考 parser.cpp）
 void parseNormal(const char* fileName, GLfloat* vertices, GLuint* indices, 
                  GLuint& vertices_size, GLuint& indices_size) {
     FILE* f = fopen(fileName, "r");
@@ -171,25 +172,25 @@ void parseNormal(const char* fileName, GLfloat* vertices, GLuint* indices,
 void description() {
     cout << SPLIT << endl;
     cout << "Starting GLFW context, OpenGL 3.3" << endl;
-    cout << "=== ������� ===" << endl;
-    cout << "A: �������" << endl;
-    cout << "D: �������" << endl;
-    cout << "W: �����ǰ" << endl;
-    cout << "S: ������" << endl;
-    cout << "TAB: �л��������ģʽ���������/���ɣ�" << endl;
-    cout << "\n=== ģ�ͱ任 ===" << endl;
-    cout << "�����<-: ��������" << endl;
-    cout << "�����->: ��������" << endl;
-    cout << "J: ����������ת" << endl;
-    cout << "L: ����������ת" << endl;
-    cout << "I: ������ǰ��ת" << endl;
-    cout << "K: ���������ת" << endl;
-    cout << "����������Ϲ��������ӷŴ�" << endl;
-    cout << "����������¹�����������С" << endl;
-    cout << "\n=== ��ѡȡ ===" << endl;
-    cout << "�����������ѡȡ�����еĵ�" << endl;
-    cout << "P: ����ѡȡ����ʾ" << endl;
-    cout << "\nESC: �˳�����" << endl;
+    cout << "=== 相机控制 ===" << endl;
+    cout << "A: 相机向左" << endl;
+    cout << "D: 相机向右" << endl;
+    cout << "W: 相机向前" << endl;
+    cout << "S: 相机向后" << endl;
+    cout << "TAB: 切换光标控制模式（正常/拾取）" << endl;
+    cout << "\n=== 模型变换 ===" << endl;
+    cout << "方向键<-: 兔子左移" << endl;
+    cout << "方向键->: 兔子右移" << endl;
+    cout << "J: 兔子向左旋转" << endl;
+    cout << "L: 兔子向右旋转" << endl;
+    cout << "I: 兔子向前旋转" << endl;
+    cout << "K: 兔子向后旋转" << endl;
+    cout << "↑或鼠标向上滚动: 兔子放大" << endl;
+    cout << "↓或鼠标向下滚动: 兔子缩小" << endl;
+    cout << "\n=== 点选取 ===" << endl;
+    cout << "鼠标左键: 选取模型中的点" << endl;
+    cout << "P: 开关选取点显示" << endl;
+    cout << "\nESC: 退出程序" << endl;
     cout << SPLIT << endl;
 }
 
@@ -217,7 +218,7 @@ GLFWwindow* init() {
     glfwSetMouseButtonCallback(window, picking_callback);
     glfwSetScrollCallback(window, scroll_callback);
     
-    // Ĭ����������ƶ�
+    // 默认允许鼠标移动
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -229,7 +230,7 @@ GLFWwindow* init() {
     return window;
 }
 
-// ��ɫ���ࣨ�򻯰� - ������ɫ��
+// 着色器类（简化版）- 内建着色器
 class Shader {
 public:
     unsigned int ID;
@@ -253,11 +254,12 @@ public:
             "in vec3 Normal;\n"
             "in vec3 FragPos;\n"
             "out vec4 FragColor;\n"
+            "uniform vec3 uColor;\n"
             "void main() {\n"
             "   vec3 norm = normalize(Normal);\n"
             "   vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));\n"
             "   float diff = max(dot(norm, lightDir), 0.3);\n"
-            "   vec3 color = vec3(0.8, 0.6, 0.4) * diff;\n"
+            "   vec3 color = uColor * diff;\n"
             "   FragColor = vec4(color, 1.0);\n"
             "}\0";
         
@@ -285,9 +287,13 @@ public:
     void setMat4(const string& name, const mat4& value) {
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
     }
+
+    void setVec3(const string& name, const vec3& value) {
+        glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
+    }
 };
 
-// �ص�����ʵ��
+// 回调函数实现
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -296,7 +302,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     mouseX = xpos;
     mouseY = ypos;
     
-    // ֻ���������ģʽ����ת���
+    // 只在禁用模式才旋转视角
     if(cursorDisabled) {
         if (firstMouse) {
             lastX = xpos;
@@ -321,7 +327,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         glfwSetWindowShouldClose(window, true);
     }
     
-    // TAB ���л��������ģʽ
+    // TAB 切换光标模式
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
         cursorDisabled = !cursorDisabled;
         if (cursorDisabled) {
@@ -332,7 +338,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
     
-    // P ���л��Ƿ���ʾѡȡ�ĵ�
+    // P 切换是否显示选取的点
     if (key == GLFW_KEY_P && action == GLFW_PRESS) {
         showPointInfo = !showPointInfo;
     }
@@ -350,14 +356,14 @@ void picking_callback(GLFWwindow *window, int button, int action, int mods) {
         GLfloat xpos = mouseX;
         GLfloat ypos = mouseY;
         cout << "\n========================================" << endl;
-        cout << "ѡȡ�����Ļ���꣺" << xpos << ", " << ypos << endl;
+        cout << "选取点的屏幕坐标：" << xpos << ", " << ypos << endl;
         
         GLfloat minDistance = pow(10, 20);
         GLuint minIndice = 0;
         
-        // �������ж��㣬�ҵ������������ĵ�
+        // 遍历所有顶点，找到距离鼠标最近的点
         for (int i = 0; i < vertices_size; i++) {
-            // ֻ���ǳ�������ĵ�
+            // 只考虑朝向相机的点
             if (dot(mat3(transpose(inverse(modelBunny))) *
                     vec3(vertices[6 * i + 3], vertices[6 * i + 4], vertices[6 * i + 5]), 
                     camera.Front) < 0) {
@@ -367,16 +373,16 @@ void picking_callback(GLFWwindow *window, int button, int action, int mods) {
                 mat4 projection = perspective(radians(camera.Zoom), 
                     (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
                 
-                // �任���㵽�ü��ռ�
+                // 变换顶点到裁剪空间
                 iPos = modelBunny * vec4(vertices[i * 6], vertices[i * 6 + 1], 
                                          vertices[i * 6 + 2], 1.0f);
                 iPos = projection * view * iPos;
                 
-                // ͸�ӳ�����ת������Ļ����
+                // 透视除法转换为屏幕坐标
                 GLfloat pointPosX = SCR_WIDTH / 2 * (iPos.x / iPos.w) + SCR_WIDTH / 2;
                 GLfloat pointPosY = SCR_HEIGHT / 2 * (-iPos.y / iPos.w) + SCR_HEIGHT / 2;
                 
-                // �������
+                // 计算距离
                 GLfloat distance = (pointPosX - xpos) * (pointPosX - xpos) + 
                                    (pointPosY - ypos) * (pointPosY - ypos);
                 
@@ -387,21 +393,21 @@ void picking_callback(GLFWwindow *window, int button, int action, int mods) {
             }
         }
         
-        // ��������㹻����ѡ�иõ�
-        if (minDistance < 1600) {  // 20 ���ذ뾶
+        // 如果距离足够近则选中该点
+        if (minDistance < 1600) {  // 20 像素半径
             selectedPointIndice = minIndice;
-            cout << "  [OK] ��������ţ�" << minIndice << endl;
-            cout << "  [OK] ��� 3D ���꣺(" 
+            cout << "  [OK] 点索引号：" << minIndice << endl;
+            cout << "  [OK] 点的 3D 坐标：(" 
                  << vertices[minIndice * 6] << ", " 
                  << vertices[minIndice * 6 + 1] << ", " 
                  << vertices[minIndice * 6 + 2] << ")" << endl;
-            cout << "  [OK] ��ķ��ߣ�(" 
+            cout << "  [OK] 点的法线：(" 
                  << vertices[minIndice * 6 + 3] << ", " 
                  << vertices[minIndice * 6 + 4] << ", " 
                  << vertices[minIndice * 6 + 5] << ")" << endl;
             cout << "========================================" << endl;
         } else {
-            cout << "  [X] ����û�е�" << endl;
+            cout << "  [X] 附近没有点" << endl;
             cout << "========================================" << endl;
         }
     }
@@ -439,6 +445,7 @@ void interactionFunctions() {
 }
 
 int main() {
+    SetConsoleOutputCP(65001);
     description();
     GLFWwindow* window = init();
     
@@ -488,6 +495,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         shader.use();
+        shader.setVec3("uColor", vec3(0.8f, 0.6f, 0.4f));
         
         mat4 projection = perspective(radians(camera.Zoom), 
             (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
@@ -502,16 +510,19 @@ int main() {
         
         // 如果选中了点且开启显示，绘制高亮立方体
         if (showPointInfo && selectedPointIndice < vertices_size) {
+            // 小立方体始终实体渲染
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             Shader selectShader("select.vs", "select.fs");
             vec4 now(modelBunny * vec4(vertices[selectedPointIndice * 6], 
                                        vertices[selectedPointIndice * 6 + 1], 
                                        vertices[selectedPointIndice * 6 + 2], 1.0f));
             
             mat4 model = translate(mat4(1.0f), vec3(now.x, now.y, now.z));
-            model = scale(model, vec3(0.01f));
+            model = scale(model, vec3(0.15f));
             view = camera.GetViewMatrix();
-            
+
             selectShader.use();
+            selectShader.setVec3("uColor", vec3(1.0f, 0.0f, 0.0f));
             selectShader.setMat4("projection", projection);
             selectShader.setMat4("view", view);
             selectShader.setMat4("model", model);
@@ -552,6 +563,10 @@ int main() {
             
             glDeleteVertexArrays(1, &selectVAO);
             glDeleteBuffers(1, &selectVBO);
+
+            // 恢复线框/实体模式
+            if (!cursorDisabled)
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
         
         glfwSwapBuffers(window);
